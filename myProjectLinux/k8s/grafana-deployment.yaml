@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:latest
+          env:
+            - name: GF_DATABASE_TYPE
+              value: postgres
+            - name: GF_DATABASE_HOST
+              value: pg-grafana
+            - name: GF_DATABASE_NAME
+              value: my_grafana_db
+            - name: GF_DATABASE_USER
+              value: my_grafana_user
+            - name: GF_DATABASE_PASSWORD
+              value: my_grafana_pwd
+            - name: GF_DATABASE_SSL_MODE
+              value: disable
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: grafana123
+          ports:
+            - containerPort: 3000
+          # Add other environment variables as needed
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-service
+spec:
+  selector:
+    app: grafana
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+  type: LoadBalancer  # Use NodePort or ClusterIP based on your requirements

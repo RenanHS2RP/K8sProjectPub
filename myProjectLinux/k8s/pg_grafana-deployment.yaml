@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pg-grafana-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pg_grafana
+  template:
+    metadata:
+      labels:
+        app: pg_grafana
+    spec:
+      containers:
+        - name: pg-grafana
+          image: postgres:15
+          env:
+            - name: POSTGRES_DB
+              value: my_grafana_db
+            - name: POSTGRES_USER
+              value: my_grafana_user
+            - name: POSTGRES_PASSWORD
+              value: my_grafana_pwd
+          ports:
+            - containerPort: 5432
+          # Add other environment variables as needed
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pg-grafana-service
+spec:
+  selector:
+    app: pg_grafana
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+  type: ClusterIP  # Use NodePort or LoadBalancer based on your requirements

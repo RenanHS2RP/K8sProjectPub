@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: djangoapp-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: djangoapp
+  template:
+    metadata:
+      labels:
+        app: djangoapp
+    spec:
+      containers:
+        - name: djangoapp
+          image: your-djangoapp-image:latest
+         ports:
+            - containerPort: 8000
+          env:
+            - name: PG_USER
+              value: postgres
+            - name: PG_PASSWORD
+              value: postgres
+            - name: PG_DB
+              value: postgres
+            - name: PG_HOST
+              value: db
+            - name: PG_PORT
+              value: "5432"
+          # Add other environment variables as needed
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: djangoapp-service
+spec:
+  selector:
+    app: djangoapp
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+  type: LoadBalancer  # Use NodePort or ClusterIP based on your requirements

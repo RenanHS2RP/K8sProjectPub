@@ -1,0 +1,89 @@
+version: '3'
+
+services:
+  pg_grafana:
+    container_name: pg_grafana
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_DB: my_grafana_db
+      POSTGRES_USER: my_grafana_user
+      POSTGRES_PASSWORD: my_grafana_pwd
+    ports:
+      - "5499:5432"
+    volumes:
+      - pg_grafana:/var/lib/postgresql/data
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:latest
+    user: "0:0"
+    environment:
+      GF_DATABASE_TYPE: postgres
+      GF_DATABASE_HOST: pg_grafana:5432
+      GF_DATABASE_NAME: my_grafana_db
+      GF_DATABASE_USER: my_grafana_user
+      GF_DATABASE_PASSWORD: my_grafana_pwd
+      GF_DATABASE_SSL_MODE: disable
+      GF_SECURITY_ADMIN_PASSWORD: grafana123
+    restart: unless-stopped
+    depends_on:
+        - pg_grafana
+    ports:
+      - 3111:3000
+    volumes:
+      - grafana:/var/lib/grafana
+
+  djangoapp:
+    container_name: djangoapp
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - PG_USER=postgres
+      - PG_PASSWORD=postgres
+      - PG_DB=postgres
+      - PG_HOST=db
+      - PG_PORT=5432
+    depends_on:
+      - db
+
+  db:
+    container_name: db
+    image: postgres:12
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    ports:
+      - "5488:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  db_exporter:
+    container_name: db_exporter
+    image: wrouesnel/postgres_exporter
+    restart: always
+    environment:
+      - DATA_SOURCE_NAME=postgres://my_grafana_user:my_grafana_pwd@pg_grafana:5432/my_grafana_db?sslmode=disable
+    ports:
+      - "9187:9187"
+    depends_on:
+      - pg_grafana
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      
+volumes:
+  pg_grafana:
+    driver: local
+  grafana:
+    driver: local
+  pg_data: 
+    driver: local
